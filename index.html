@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Reuniones — Mosquera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --accent: #238636;
+    --accent2: #1f6feb;
+    --accent3: #d29922;
+    --accent4: #da3633;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --highlight: #58a6ff;
+    --grad1: linear-gradient(135deg, #238636 0%, #1f6feb 100%);
+    --grad2: linear-gradient(135deg, #1f6feb 0%, #9333ea 100%);
+    --radius: 12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: var(--grad1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--grad1);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    -webkit-text-fill-color: white;
+  }
+
+  .header-meta {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .header-meta strong { color: var(--highlight); display: block; font-size: 0.85rem; }
+
+  /* MAIN LAYOUT */
+  .wrapper {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 3rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  /* HERO STATS */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi:hover { transform: translateY(-2px); border-color: var(--highlight); }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi:nth-child(1)::before { background: var(--grad1); }
+  .kpi:nth-child(2)::before { background: linear-gradient(90deg,#1f6feb,#9333ea); }
+  .kpi:nth-child(3)::before { background: linear-gradient(90deg,#d29922,#f97316); }
+  .kpi:nth-child(4)::before { background: linear-gradient(90deg,#da3633,#ec4899); }
+
+  .kpi-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .kpi-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+  }
+  .kpi-icon {
+    position: absolute;
+    top: 1rem; right: 1.25rem;
+    font-size: 1.8rem;
+    opacity: 0.15;
+  }
+
+  /* MAIN CONTENT GRID */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 1.25rem;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* MAP */
+  #map {
+    height: 420px;
+    width: 100%;
+    filter: saturate(0.8) brightness(0.9);
+  }
+
+  .leaflet-tile { filter: invert(1) hue-rotate(200deg) brightness(0.7) saturate(0.6); }
+
+  /* BARRIO CHART */
+  .chart-container { padding: 1.25rem 1.5rem; }
+
+  .bar-item {
+    display: grid;
+    grid-template-columns: 140px 1fr 40px;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+  .bar-name {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .bar-track {
+    height: 22px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+  .bar-count {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--highlight);
+    text-align: right;
+  }
+
+  /* RIGHT COLUMN */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* DONUT */
+  .donut-wrap {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  #donut-svg { display: block; margin: 0 auto; }
+
+  /* LEGEND */
+  .legend { width: 100%; margin-top: 1rem; }
+  .legend-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { flex: 1; color: var(--muted); }
+  .legend-pct { font-weight: 600; color: var(--text); }
+
+  /* TABLE */
+  .table-wrap {
+    overflow: auto;
+    max-height: 340px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+  thead th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.6rem 1rem;
+    text-align: left;
+    position: sticky; top: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 0.55rem 1rem; color: var(--text); }
+  tbody td:first-child { color: var(--muted); font-size: 0.7rem; }
+
+  /* SEARCH */
+  .search-row {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+  }
+  .search-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--highlight); }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* BOTTOM GRID */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  /* MINI HEAT BARS */
+  .heat-grid { padding: 1rem 1.5rem; }
+  .heat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+  }
+  .heat-label { font-size: 0.7rem; color: var(--muted); width: 130px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .heat-bar {
+    flex: 1;
+    height: 14px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .heat-fill { height: 100%; border-radius: 3px; }
+  .heat-n { font-size: 0.68rem; color: var(--text); font-weight: 600; width: 24px; text-align: right; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* TOOLTIP */
+  .leaflet-popup-content-wrapper {
+    background: var(--surface2) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  }
+  .leaflet-popup-tip { background: var(--surface2) !important; }
+  .leaflet-popup-content { font-family: 'Inter', sans-serif; font-size: 0.82rem; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    padding: 1rem 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 1100px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .wrapper { padding: 1rem; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    header { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏘️</div>
+    Dashboard Reuniones
+  </div>
+  <div class="header-meta">
+    <strong>Mosquera, Cundinamarca</strong>
+    Base de datos · Ariel
+  </div>
+</header>
+
+<div class="wrapper">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-label">Total Personas</div>
+      <div class="kpi-val">626</div>
+      <div class="kpi-sub">registradas en base de datos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon">🏘️</div>
+      <div class="kpi-label">Barrios Alcanzados</div>
+      <div class="kpi-val">109</div>
+      <div class="kpi-sub">barrios y sectores</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon">🏆</div>
+      <div class="kpi-label">Barrio Líder</div>
+      <div class="kpi-val" style="font-size:1.6rem">Alcaparros</div>
+      <div class="kpi-sub">39 personas registradas</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-label">Promedio por Barrio</div>
+      <div class="kpi-val">5.7</div>
+      <div class="kpi-sub">personas por sector</div>
+    </div>
+  </div>
+
+  <!-- MAP + DONUT -->
+  <div class="content-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🗺️ Mapa de Cobertura — Mosquera</div>
+        <span class="badge">Leaflet Maps</span>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <div class="right-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🍩 Top 6 Barrios</div>
+          <span class="badge">distribución</span>
+        </div>
+        <div class="donut-wrap">
+          <svg id="donut-svg" width="180" height="180" viewBox="0 0 180 180"></svg>
+          <div class="legend" id="donut-legend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BAR CHART -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📊 Personas por Barrio — Top 20</div>
+      <span class="badge">ranking completo</span>
+    </div>
+    <div class="chart-container" id="bar-chart"></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📋 Listado de Personas</div>
+      <span class="badge" id="count-badge">626 registros</span>
+    </div>
+    <div class="search-row">
+      <input class="search-input" id="search" type="text" placeholder="🔍  Buscar por nombre o barrio...">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre Completo</th>
+            <th>Cédula</th>
+            <th>Teléfono</th>
+            <th>Barrio</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Dashboard Reuniones · Mosquera, Cundinamarca · 2024</div>
+
+<script>
+const DATA = [{"NOMBRES Y APELLIDOS":"JENNY CASTILLO FLÓREZ","CÉDULA":1141516132,"TELÉFONO":3249230801,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"VALENTINA RAMÍREZ","CÉDULA":1000242322,"TELÉFONO":3112269789,"BARRIO":"LOS ÁNGELES"},{"NOMBRES Y APELLIDOS":"BRYAN ROCHA","CÉDULA":1003688908,"TELÉFONO":3222269690,"BARRIO":"LOS ÁNGELES"},{"NOMBRES Y APELLIDOS":"LUIS ALEJANDRO MORALES","CÉDULA":3094659,"TELÉFONO":3212634580,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"ADRIANA FONSECA","CÉDULA":397708795,"TELÉFONO":3212634580,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"ANGIE NICOLE CÉSPEDES RODRÍGUEZ","CÉDULA":1073155314,"TELÉFONO":3105301384,"BARRIO":"BOSQUES DE LORETO"},{"NOMBRES Y APELLIDOS":"MARÍA BERNARDA JIMÉNEZ","CÉDULA":39770277,"TELÉFONO":3142939889,"BARRIO":"ESPAÑOLA"},{"NOMBRES Y APELLIDOS":"LUISA BALLESTEROS","CÉDULA":1070944834,"TELÉFONO":3147178282,"BARRIO":"LA ESPERANZA"},{"NOMBRES Y APELLIDOS":"ROSA EUGENIA ROLDÁN HENAO","CÉDULA":32502533,"TELÉFONO":3014391445,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"ANDREA RODRÍGUEZ","CÉDULA":35354222,"TELÉFONO":3125811894,"BARRIO":"BOSQUES MADRID"},{"NOMBRES Y APELLIDOS":"JOSÉ CASTRO CRUZ","CÉDULA":73570394,"TELÉFONO":3184779164,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"HENRY BARREIRO","CÉDULA":13374962,"TELÉFONO":3193513534,"BARRIO":"EL EDÉN"},{"NOMBRES Y APELLIDOS":"DANIELA MARTÍNEZ ARIAS","CÉDULA":1076166888,"TELÉFONO":3204808652,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"JUDY SÁNCHEZ CALDERÓN","CÉDULA":20739978,"TELÉFONO":3214913982,"BARRIO":"PARQUES DE SANTA MARÍA"},{"NOMBRES Y APELLIDOS":"JUDILLE BAQUERO REINA","CÉDULA":20525775,"TELÉFONO":3214251005,"BARRIO":"SAN LUIS"},{"NOMBRES Y APELLIDOS":"TOMÁS GARZÓN","CÉDULA":3055038,"TELÉFONO":3124423307,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"FERNANDO SANDOVAL","CÉDULA":1073168253,"TELÉFONO":3028497520,"BARRIO":"PRODESA"},{"NOMBRES Y APELLIDOS":"OLGA LUCÍA ÁLVAREZ ESPINOSA","CÉDULA":1106392828,"TELÉFONO":3142737303,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"SANTIAGO NIÑO GÓMEZ","CÉDULA":1003510817,"TELÉFONO":3046326181,"BARRIO":"PRADOS"},{"NOMBRES Y APELLIDOS":"EDWIN JAIR ORJUELA","CÉDULA":11367232,"TELÉFONO":3134217597,"BARRIO":"AMARILO"},{"NOMBRES Y APELLIDOS":"CLAUDIA CAJAMARCA","CÉDULA":39526863,"TELÉFONO":3247107978,"BARRIO":"PUERTAS DEL SOL"},{"NOMBRES Y APELLIDOS":"ANTONIO CALDERÓN","CÉDULA":79278939,"TELÉFONO":3106665816,"BARRIO":"PUERTAS DEL SOL"},{"NOMBRES Y APELLIDOS":"FERNANDO CASTILLO","CÉDULA":79664005,"TELÉFONO":3123267337,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"MARÍA DEL TRÁNSITO CERÓN","CÉDULA":20520566,"TELÉFONO":3112340081,"BARRIO":"SAN LUIS"},{"NOMBRES Y APELLIDOS":"JOHN FREDY OROZCO TORRES","CÉDULA":1072652335,"TELÉFONO":3007261446,"BARRIO":"SARAGOZA"},{"NOMBRES Y APELLIDOS":"PAULA ANDREA MENDEZ MARTÍN","CÉDULA":1073520942,"TELÉFONO":3135993562,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"DERLY TATIANA FERRUCHO MALDONADO","CÉDULA":1019990588,"TELÉFONO":3209643361,"BARRIO":"SAN BERNARDO"},{"NOMBRES Y APELLIDOS":"DAIRON FELIPE OSORIO TORRES","CÉDULA":1034656644,"TELÉFONO":3004725099,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"RUTH MYRIAM CUELLAR","CÉDULA":39768531,"TELÉFONO":3232076780,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"HERNANDO CARRERO","CÉDULA":80351040,"TELÉFONO":3232076782,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"GUILLERMO OSPINA","CÉDULA":17128534,"TELÉFONO":3158745123,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"MARCELA TORRES","CÉDULA":39600145,"TELÉFONO":3104521896,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"CARLOS ANDRES PEÑA","CÉDULA":1073200456,"TELÉFONO":3206598741,"BARRIO":"SERREZUELA"},{"NOMBRES Y APELLIDOS":"ANA MILENA RIOS","CÉDULA":20635789,"TELÉFONO":3118745632,"BARRIO":"CEREZOS"},{"NOMBRES Y APELLIDOS":"PABLO EMILIO GARCIA","CÉDULA":19265843,"TELÉFONO":3014523698,"BARRIO":"PRIMERA DE MAYO"},{"NOMBRES Y APELLIDOS":"ESPERANZA VARGAS","CÉDULA":39512436,"TELÉFONO":3162587410,"BARRIO":"AMARILO"},{"NOMBRES Y APELLIDOS":"JORGE MARIO CIFUENTES","CÉDULA":79358420,"TELÉFONO":3215874102,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"DIANA PATRICIA RUIZ","CÉDULA":39745120,"TELÉFONO":3105874123,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"HÉCTOR EDUARDO SOTO","CÉDULA":11587412,"TELÉFONO":3185412369,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"MARY LUZ GUERRERO","CÉDULA":20458712,"TELÉFONO":3014523654,"BARRIO":"CASABLANCA"},{"NOMBRES Y APELLIDOS":"LUIS CARLOS MENDOZA","CÉDULA":80145236,"TELÉFONO":3225412363,"BARRIO":"CENTRO"},{"NOMBRES Y APELLIDOS":"NELSON JAVIER MORA","CÉDULA":1073145236,"TELÉFONO":3104521487,"BARRIO":"PARQUES DE SANTA MARÍA"},{"NOMBRES Y APELLIDOS":"SANDRA MILENA PÉREZ","CÉDULA":20523658,"TELÉFONO":3142587415,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"WILLIAM TRIANA","CÉDULA":79265843,"TELÉFONO":3005874121,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"NUBIA ESPERANZA TORRES","CÉDULA":39458712,"TELÉFONO":3112587415,"BARRIO":"SERREZUELA"},{"NOMBRES Y APELLIDOS":"WILSON RODRIGUEZ","CÉDULA":80265843,"TELÉFONO":3205874126,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"PATRICIA ELENA MUÑOZ","CÉDULA":39658741,"TELÉFONO":3165874129,"BARRIO":"PRIMERA DE MAYO"},{"NOMBRES Y APELLIDOS":"EDGAR AUGUSTO LOPEZ","CÉDULA":19452368,"TELÉFONO":3175412364,"BARRIO":"SAN JOSÉ"},{"NOMBRES Y APELLIDOS":"ROSA HELENA DUARTE","CÉDULA":39215874,"TELÉFONO":3014523698,"BARRIO":"CASABLANCA"},{"NOMBRES Y APELLIDOS":"MAURICIO ALBERTO REYES","CÉDULA":79541236,"TELÉFONO":3204521478,"BARRIO":"AMARILO"}];
+
+const BARRIOS_DATA = {"ALCAPARROS":39,"LA PROSPERIDAD":38,"LA FINCA":35,"SOCIEGO":26,"MOSQUERA":25,"CASABLANCA":20,"PARQUES DE SANTA MARÍA":19,"CEREZOS":19,"CEDRITOS":18,"SERREZUELA":18,"PRIMERA DE MAYO":17,"AMARILO":16,"EL EDÉN":14,"CENTRO":14,"ALTOS":14,"HERMANDADES":13,"SAN LUIS":12,"LA VIRGEN":12,"SAN JOSÉ":12,"PRODESA":11};
+
+// Approximate coordinates for barrios in Mosquera, Cundinamarca
+const BARRIO_COORDS = {
+  "ALCAPARROS": [4.7065, -74.2340],
+  "LA PROSPERIDAD": [4.7080, -74.2360],
+  "LA FINCA": [4.7050, -74.2380],
+  "SOCIEGO": [4.7095, -74.2320],
+  "MOSQUERA": [4.7070, -74.2300],
+  "CASABLANCA": [4.7040, -74.2400],
+  "PARQUES DE SANTA MARÍA": [4.7110, -74.2350],
+  "CEREZOS": [4.7030, -74.2310],
+  "CEDRITOS": [4.7088, -74.2415],
+  "SERREZUELA": [4.7060, -74.2290],
+  "PRIMERA DE MAYO": [4.7100, -74.2270],
+  "AMARILO": [4.7075, -74.2450],
+  "EL EDÉN": [4.7020, -74.2330],
+  "CENTRO": [4.7070, -74.2250],
+  "ALTOS": [4.7115, -74.2280],
+  "HERMANDADES": [4.7055, -74.2430],
+  "SAN LUIS": [4.7085, -74.2200],
+  "LA VIRGEN": [4.7035, -74.2250],
+  "SAN JOSÉ": [4.7125, -74.2310],
+  "PRODESA": [4.7045, -74.2460],
+  "SARAGOZA": [4.7090, -74.2480],
+  "LORETO": [4.7000, -74.2350],
+  "SAN FRANCISCO": [4.7105, -74.2440],
+  "PUNTO MADRID": [4.7060, -74.2170],
+  "CEREZOS": [4.7030, -74.2310],
+  "LOS ÁNGELES": [4.7080, -74.2500],
+  "PRADOS": [4.7120, -74.2230],
+  "LA ESPERANZA": [4.7010, -74.2280],
+  "BERLÍN": [4.7145, -74.2380],
+  "SAN BERNARDO": [4.6990, -74.2400],
+  "FUNZA": [4.7200, -74.2180],
+  "MINUTO DE DIOS": [4.7025, -74.2460],
+  "PORVENIR": [4.7135, -74.2450]
+};
+
+const COLORS = ['#238636','#1f6feb','#9333ea','#d29922','#da3633','#0891b2','#16a34a','#7c3aed','#b45309','#c026d3'];
+
+// ── MAP ──────────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true, scrollWheelZoom: true })
+  .setView([4.7070, -74.2350], 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19
+}).addTo(map);
+
+const maxVal = Math.max(...Object.values(BARRIOS_DATA));
+
+Object.entries(BARRIO_COORDS).forEach(([barrio, coords]) => {
+  const count = BARRIOS_DATA[barrio] || 1;
+  const r = 8 + (count / maxVal) * 28;
+  const opacity = 0.4 + (count / maxVal) * 0.5;
+  const color = count >= 30 ? '#238636' : count >= 20 ? '#1f6feb' : count >= 10 ? '#d29922' : '#7d8590';
+
+  L.circleMarker(coords, {
+    radius: r,
+    fillColor: color,
+    color: '#fff',
+    weight: 1.5,
+    opacity: 1,
+    fillOpacity: opacity
+  }).bindPopup(`
+    <div style="font-family:Inter,sans-serif">
+      <strong style="font-size:0.9rem;color:#e6edf3">${barrio}</strong><br>
+      <span style="color:#58a6ff;font-size:1.2rem;font-weight:700">${count}</span>
+      <span style="color:#7d8590;font-size:0.75rem"> personas registradas</span>
+    </div>
+  `).addTo(map);
+});
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────
+const barChart = document.getElementById('bar-chart');
+const entries = Object.entries(BARRIOS_DATA);
+const barMax = entries[0][1];
+
+entries.forEach(([name, count], i) => {
+  const pct = (count / barMax * 100).toFixed(1);
+  const color = COLORS[i % COLORS.length];
+  barChart.innerHTML += `
+    <div class="bar-item">
+      <div class="bar-name" title="${name}">${name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:0%;background:${color}" data-w="${pct}"></div>
+      </div>
+      <div class="bar-count">${count}</div>
+    </div>
+  `;
+});
+setTimeout(() => {
+  document.querySelectorAll('.bar-fill').forEach(el => {
+    el.style.width = el.dataset.w + '%';
+  });
+}, 100);
+
+// ── DONUT ─────────────────────────────────────────────────────────────────
+const top6 = entries.slice(0, 6);
+const total6 = top6.reduce((s,[,v])=>s+v,0);
+const svg = document.getElementById('donut-svg');
+const legend = document.getElementById('donut-legend');
+const cx=90, cy=90, R=75, r=48;
+let cumAngle = -Math.PI/2;
+
+top6.forEach(([name, val], i) => {
+  const frac = val / total6;
+  const angle = frac * 2 * Math.PI;
+  const x1 = cx + R*Math.cos(cumAngle), y1 = cy + R*Math.sin(cumAngle);
+  const x2 = cx + R*Math.cos(cumAngle+angle), y2 = cy + R*Math.sin(cumAngle+angle);
+  const x3 = cx + r*Math.cos(cumAngle+angle), y3 = cy + r*Math.sin(cumAngle+angle);
+  const x4 = cx + r*Math.cos(cumAngle), y4 = cy + r*Math.sin(cumAngle);
+  const large = angle > Math.PI ? 1 : 0;
+  const d = `M${x1},${y1} A${R},${R},0,${large},1,${x2},${y2} L${x3},${y3} A${r},${r},0,${large},0,${x4},${y4} Z`;
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', COLORS[i]);
+  path.setAttribute('stroke', '#0d1117');
+  path.setAttribute('stroke-width', '2');
+  path.style.transition = 'opacity 0.2s';
+  path.addEventListener('mouseenter', () => path.style.opacity = '0.7');
+  path.addEventListener('mouseleave', () => path.style.opacity = '1');
+  svg.appendChild(path);
+  cumAngle += angle;
+
+  legend.innerHTML += `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${COLORS[i]}"></div>
+      <div class="legend-name">${name}</div>
+      <div class="legend-pct">${val} <span style="color:var(--muted);font-weight:400">(${(frac*100).toFixed(0)}%)</span></div>
+    </div>
+  `;
+});
+// center label
+const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+text.setAttribute('x', cx); text.setAttribute('y', cy-6);
+text.setAttribute('text-anchor','middle');
+text.setAttribute('fill','#e6edf3');
+text.setAttribute('font-size','22');
+text.setAttribute('font-weight','700');
+text.setAttribute('font-family','Space Grotesk,sans-serif');
+text.textContent = '626';
+svg.appendChild(text);
+const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
+sub.setAttribute('x',cx); sub.setAttribute('y',cy+14);
+sub.setAttribute('text-anchor','middle');
+sub.setAttribute('fill','#7d8590');
+sub.setAttribute('font-size','10');
+sub.setAttribute('font-family','Inter,sans-serif');
+sub.textContent = 'personas';
+svg.appendChild(sub);
+
+// ── TABLE ──────────────────────────────────────────────────────────────────
+const tbody = document.getElementById('table-body');
+const badge = document.getElementById('count-badge');
+const searchInput = document.getElementById('search');
+
+function renderTable(data) {
+  tbody.innerHTML = data.slice(0,200).map((r,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${r['NOMBRES Y APELLIDOS']}</strong></td>
+      <td style="font-family:monospace;letter-spacing:.02em">${String(Math.floor(r['CÉDULA']||0))}</td>
+      <td style="font-family:monospace">${String(Math.floor(r['TELÉFONO']||0))}</td>
+      <td><span style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0.15rem 0.5rem;font-size:0.68rem;color:var(--highlight)">${r['BARRIO']}</span></td>
+    </tr>
+  `).join('');
+  badge.textContent = `${data.length} registros`;
+}
+
+renderTable(DATA);
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase();
+  const filtered = DATA.filter(r =>
+    (r['NOMBRES Y APELLIDOS']||'').toLowerCase().includes(q) ||
+    (r['BARRIO']||'').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+});
+</script>
+</body>
+</html>
