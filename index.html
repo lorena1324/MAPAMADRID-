@@ -82,6 +82,35 @@
   }
   .header-meta strong { color: var(--highlight); display: block; font-size: 0.85rem; }
 
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0 2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 64px;
+    z-index: 99;
+  }
+  .nav-tab {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.9rem 1rem 0.75rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--highlight); border-bottom-color: var(--highlight); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
   /* MAIN LAYOUT */
   .wrapper {
     max-width: 1440px;
@@ -338,6 +367,59 @@
   .heat-fill { height: 100%; border-radius: 3px; }
   .heat-n { font-size: 0.68rem; color: var(--text); font-weight: 600; width: 24px; text-align: right; }
 
+  /* LEADER CARDS */
+  .leader-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .leader-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .leader-card:hover { transform: translateY(-2px); border-color: var(--highlight); }
+  .leader-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+    background: var(--grad2);
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+  .leader-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.6rem;
+  }
+  .leader-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .leader-row .li-ico { flex-shrink: 0; opacity: 0.8; }
+  .leader-row .li-val { color: var(--text); }
+  .leader-process {
+    display: inline-block;
+    margin-top: 0.5rem;
+    background: rgba(147,51,234,0.15);
+    border: 1px solid #9333ea;
+    color: #c084fc;
+    border-radius: 20px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
   /* SCROLL */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--surface); }
@@ -373,6 +455,7 @@
     .wrapper { padding: 1rem; }
     .kpi-row { grid-template-columns: 1fr 1fr; }
     header { padding: 0 1rem; }
+    .nav-tabs { padding: 0 1rem; overflow-x: auto; }
   }
 </style>
 </head>
@@ -389,92 +472,139 @@
   </div>
 </header>
 
+<div class="nav-tabs">
+  <button class="nav-tab active" data-view="view-personas">👥 Personas</button>
+  <button class="nav-tab" data-view="view-lideres">⭐ Líderes</button>
+</div>
+
 <div class="wrapper">
 
-  <!-- KPIs -->
-  <div class="kpi-row">
-    <div class="kpi">
-      <div class="kpi-icon">👥</div>
-      <div class="kpi-label">Total Personas</div>
-      <div class="kpi-val">626</div>
-      <div class="kpi-sub">registradas en base de datos</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-icon">🏘️</div>
-      <div class="kpi-label">Barrios Alcanzados</div>
-      <div class="kpi-val">109</div>
-      <div class="kpi-sub">barrios y sectores</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-icon">🏆</div>
-      <div class="kpi-label">Barrio Líder</div>
-      <div class="kpi-val" style="font-size:1.6rem">Alcaparros</div>
-      <div class="kpi-sub">39 personas registradas</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-icon">📊</div>
-      <div class="kpi-label">Promedio por Barrio</div>
-      <div class="kpi-val">5.7</div>
-      <div class="kpi-sub">personas por sector</div>
-    </div>
-  </div>
+  <!-- ================= VISTA: PERSONAS ================= -->
+  <div id="view-personas" class="view active">
 
-  <!-- MAP + DONUT -->
-  <div class="content-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">🗺️ Mapa de Cobertura — Mosquera</div>
-        <span class="badge">Leaflet Maps</span>
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-label">Total Personas</div>
+        <div class="kpi-val">626</div>
+        <div class="kpi-sub">registradas en base de datos</div>
       </div>
-      <div id="map"></div>
+      <div class="kpi">
+        <div class="kpi-icon">🏘️</div>
+        <div class="kpi-label">Barrios Alcanzados</div>
+        <div class="kpi-val">109</div>
+        <div class="kpi-sub">barrios y sectores</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🏆</div>
+        <div class="kpi-label">Barrio Líder</div>
+        <div class="kpi-val" style="font-size:1.6rem">Alcaparros</div>
+        <div class="kpi-sub">39 personas registradas</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-label">Promedio por Barrio</div>
+        <div class="kpi-val">5.7</div>
+        <div class="kpi-sub">personas por sector</div>
+      </div>
     </div>
 
-    <div class="right-col">
+    <!-- MAP + DONUT -->
+    <div class="content-grid">
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">🍩 Top 6 Barrios</div>
-          <span class="badge">distribución</span>
+          <div class="panel-title">🗺️ Mapa de Cobertura — Mosquera</div>
+          <span class="badge">Leaflet Maps</span>
         </div>
-        <div class="donut-wrap">
-          <svg id="donut-svg" width="180" height="180" viewBox="0 0 180 180"></svg>
-          <div class="legend" id="donut-legend"></div>
+        <div id="map"></div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🍩 Top 6 Barrios</div>
+            <span class="badge">distribución</span>
+          </div>
+          <div class="donut-wrap">
+            <svg id="donut-svg" width="180" height="180" viewBox="0 0 180 180"></svg>
+            <div class="legend" id="donut-legend"></div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- BAR CHART -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📊 Personas por Barrio — Top 20</div>
+        <span class="badge">ranking completo</span>
+      </div>
+      <div class="chart-container" id="bar-chart"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 Listado de Personas</div>
+        <span class="badge" id="count-badge">626 registros</span>
+      </div>
+      <div class="search-row">
+        <input class="search-input" id="search" type="text" placeholder="🔍  Buscar por nombre o barrio...">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre Completo</th>
+              <th>Cédula</th>
+              <th>Teléfono</th>
+              <th>Barrio</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <!-- BAR CHART -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">📊 Personas por Barrio — Top 20</div>
-      <span class="badge">ranking completo</span>
-    </div>
-    <div class="chart-container" id="bar-chart"></div>
-  </div>
+  <!-- ================= VISTA: LÍDERES ================= -->
+  <div id="view-lideres" class="view">
 
-  <!-- TABLE -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">📋 Listado de Personas</div>
-      <span class="badge" id="count-badge">626 registros</span>
+    <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi">
+        <div class="kpi-icon">⭐</div>
+        <div class="kpi-label">Total Líderes</div>
+        <div class="kpi-val" id="leader-total">0</div>
+        <div class="kpi-sub">registrados en base de datos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🏘️</div>
+        <div class="kpi-label">Barrios con Líder</div>
+        <div class="kpi-val" id="leader-barrios">0</div>
+        <div class="kpi-sub">sectores representados</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-icon">🧭</div>
+        <div class="kpi-label">Procesos Identificados</div>
+        <div class="kpi-val" id="leader-procesos">0</div>
+        <div class="kpi-sub">áreas / frentes de trabajo</div>
+      </div>
     </div>
-    <div class="search-row">
-      <input class="search-input" id="search" type="text" placeholder="🔍  Buscar por nombre o barrio...">
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⭐ Líderes Registrados</div>
+        <span class="badge" id="leader-count-badge">0 líderes</span>
+      </div>
+      <div class="search-row">
+        <input class="search-input" id="leader-search" type="text" placeholder="🔍  Buscar líder por nombre, barrio o proceso...">
+      </div>
+      <div class="leader-grid" id="leader-grid"></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Nombre Completo</th>
-            <th>Cédula</th>
-            <th>Teléfono</th>
-            <th>Barrio</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
+
   </div>
 
 </div>
@@ -485,6 +615,22 @@
 const DATA = [{"NOMBRES Y APELLIDOS":"JENNY CASTILLO FLÓREZ","CÉDULA":1141516132,"TELÉFONO":3249230801,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"VALENTINA RAMÍREZ","CÉDULA":1000242322,"TELÉFONO":3112269789,"BARRIO":"LOS ÁNGELES"},{"NOMBRES Y APELLIDOS":"BRYAN ROCHA","CÉDULA":1003688908,"TELÉFONO":3222269690,"BARRIO":"LOS ÁNGELES"},{"NOMBRES Y APELLIDOS":"LUIS ALEJANDRO MORALES","CÉDULA":3094659,"TELÉFONO":3212634580,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"ADRIANA FONSECA","CÉDULA":397708795,"TELÉFONO":3212634580,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"ANGIE NICOLE CÉSPEDES RODRÍGUEZ","CÉDULA":1073155314,"TELÉFONO":3105301384,"BARRIO":"BOSQUES DE LORETO"},{"NOMBRES Y APELLIDOS":"MARÍA BERNARDA JIMÉNEZ","CÉDULA":39770277,"TELÉFONO":3142939889,"BARRIO":"ESPAÑOLA"},{"NOMBRES Y APELLIDOS":"LUISA BALLESTEROS","CÉDULA":1070944834,"TELÉFONO":3147178282,"BARRIO":"LA ESPERANZA"},{"NOMBRES Y APELLIDOS":"ROSA EUGENIA ROLDÁN HENAO","CÉDULA":32502533,"TELÉFONO":3014391445,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"ANDREA RODRÍGUEZ","CÉDULA":35354222,"TELÉFONO":3125811894,"BARRIO":"BOSQUES MADRID"},{"NOMBRES Y APELLIDOS":"JOSÉ CASTRO CRUZ","CÉDULA":73570394,"TELÉFONO":3184779164,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"HENRY BARREIRO","CÉDULA":13374962,"TELÉFONO":3193513534,"BARRIO":"EL EDÉN"},{"NOMBRES Y APELLIDOS":"DANIELA MARTÍNEZ ARIAS","CÉDULA":1076166888,"TELÉFONO":3204808652,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"JUDY SÁNCHEZ CALDERÓN","CÉDULA":20739978,"TELÉFONO":3214913982,"BARRIO":"PARQUES DE SANTA MARÍA"},{"NOMBRES Y APELLIDOS":"JUDILLE BAQUERO REINA","CÉDULA":20525775,"TELÉFONO":3214251005,"BARRIO":"SAN LUIS"},{"NOMBRES Y APELLIDOS":"TOMÁS GARZÓN","CÉDULA":3055038,"TELÉFONO":3124423307,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"FERNANDO SANDOVAL","CÉDULA":1073168253,"TELÉFONO":3028497520,"BARRIO":"PRODESA"},{"NOMBRES Y APELLIDOS":"OLGA LUCÍA ÁLVAREZ ESPINOSA","CÉDULA":1106392828,"TELÉFONO":3142737303,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"SANTIAGO NIÑO GÓMEZ","CÉDULA":1003510817,"TELÉFONO":3046326181,"BARRIO":"PRADOS"},{"NOMBRES Y APELLIDOS":"EDWIN JAIR ORJUELA","CÉDULA":11367232,"TELÉFONO":3134217597,"BARRIO":"AMARILO"},{"NOMBRES Y APELLIDOS":"CLAUDIA CAJAMARCA","CÉDULA":39526863,"TELÉFONO":3247107978,"BARRIO":"PUERTAS DEL SOL"},{"NOMBRES Y APELLIDOS":"ANTONIO CALDERÓN","CÉDULA":79278939,"TELÉFONO":3106665816,"BARRIO":"PUERTAS DEL SOL"},{"NOMBRES Y APELLIDOS":"FERNANDO CASTILLO","CÉDULA":79664005,"TELÉFONO":3123267337,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"MARÍA DEL TRÁNSITO CERÓN","CÉDULA":20520566,"TELÉFONO":3112340081,"BARRIO":"SAN LUIS"},{"NOMBRES Y APELLIDOS":"JOHN FREDY OROZCO TORRES","CÉDULA":1072652335,"TELÉFONO":3007261446,"BARRIO":"SARAGOZA"},{"NOMBRES Y APELLIDOS":"PAULA ANDREA MENDEZ MARTÍN","CÉDULA":1073520942,"TELÉFONO":3135993562,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"DERLY TATIANA FERRUCHO MALDONADO","CÉDULA":1019990588,"TELÉFONO":3209643361,"BARRIO":"SAN BERNARDO"},{"NOMBRES Y APELLIDOS":"DAIRON FELIPE OSORIO TORRES","CÉDULA":1034656644,"TELÉFONO":3004725099,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"RUTH MYRIAM CUELLAR","CÉDULA":39768531,"TELÉFONO":3232076780,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"HERNANDO CARRERO","CÉDULA":80351040,"TELÉFONO":3232076782,"BARRIO":"CEDRITOS"},{"NOMBRES Y APELLIDOS":"GUILLERMO OSPINA","CÉDULA":17128534,"TELÉFONO":3158745123,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"MARCELA TORRES","CÉDULA":39600145,"TELÉFONO":3104521896,"BARRIO":"LA PROSPERIDAD"},{"NOMBRES Y APELLIDOS":"CARLOS ANDRES PEÑA","CÉDULA":1073200456,"TELÉFONO":3206598741,"BARRIO":"SERREZUELA"},{"NOMBRES Y APELLIDOS":"ANA MILENA RIOS","CÉDULA":20635789,"TELÉFONO":3118745632,"BARRIO":"CEREZOS"},{"NOMBRES Y APELLIDOS":"PABLO EMILIO GARCIA","CÉDULA":19265843,"TELÉFONO":3014523698,"BARRIO":"PRIMERA DE MAYO"},{"NOMBRES Y APELLIDOS":"ESPERANZA VARGAS","CÉDULA":39512436,"TELÉFONO":3162587410,"BARRIO":"AMARILO"},{"NOMBRES Y APELLIDOS":"JORGE MARIO CIFUENTES","CÉDULA":79358420,"TELÉFONO":3215874102,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"DIANA PATRICIA RUIZ","CÉDULA":39745120,"TELÉFONO":3105874123,"BARRIO":"LA FINCA"},{"NOMBRES Y APELLIDOS":"HÉCTOR EDUARDO SOTO","CÉDULA":11587412,"TELÉFONO":3185412369,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"MARY LUZ GUERRERO","CÉDULA":20458712,"TELÉFONO":3014523654,"BARRIO":"CASABLANCA"},{"NOMBRES Y APELLIDOS":"LUIS CARLOS MENDOZA","CÉDULA":80145236,"TELÉFONO":3225412363,"BARRIO":"CENTRO"},{"NOMBRES Y APELLIDOS":"NELSON JAVIER MORA","CÉDULA":1073145236,"TELÉFONO":3104521487,"BARRIO":"PARQUES DE SANTA MARÍA"},{"NOMBRES Y APELLIDOS":"SANDRA MILENA PÉREZ","CÉDULA":20523658,"TELÉFONO":3142587415,"BARRIO":"HERMANDADES"},{"NOMBRES Y APELLIDOS":"WILLIAM TRIANA","CÉDULA":79265843,"TELÉFONO":3005874121,"BARRIO":"ALCAPARROS"},{"NOMBRES Y APELLIDOS":"NUBIA ESPERANZA TORRES","CÉDULA":39458712,"TELÉFONO":3112587415,"BARRIO":"SERREZUELA"},{"NOMBRES Y APELLIDOS":"WILSON RODRIGUEZ","CÉDULA":80265843,"TELÉFONO":3205874126,"BARRIO":"SOCIEGO"},{"NOMBRES Y APELLIDOS":"PATRICIA ELENA MUÑOZ","CÉDULA":39658741,"TELÉFONO":3165874129,"BARRIO":"PRIMERA DE MAYO"},{"NOMBRES Y APELLIDOS":"EDGAR AUGUSTO LOPEZ","CÉDULA":19452368,"TELÉFONO":3175412364,"BARRIO":"SAN JOSÉ"},{"NOMBRES Y APELLIDOS":"ROSA HELENA DUARTE","CÉDULA":39215874,"TELÉFONO":3014523698,"BARRIO":"CASABLANCA"},{"NOMBRES Y APELLIDOS":"MAURICIO ALBERTO REYES","CÉDULA":79541236,"TELÉFONO":3204521478,"BARRIO":"AMARILO"}];
 
 const BARRIOS_DATA = {"ALCAPARROS":39,"LA PROSPERIDAD":38,"LA FINCA":35,"SOCIEGO":26,"MOSQUERA":25,"CASABLANCA":20,"PARQUES DE SANTA MARÍA":19,"CEREZOS":19,"CEDRITOS":18,"SERREZUELA":18,"PRIMERA DE MAYO":17,"AMARILO":16,"EL EDÉN":14,"CENTRO":14,"ALTOS":14,"HERMANDADES":13,"SAN LUIS":12,"LA VIRGEN":12,"SAN JOSÉ":12,"PRODESA":11};
+
+// ── LÍDERES ──────────────────────────────────────────────────────────────
+const LEADERS = [
+  { nombre: "Wilmer Ortiz", cedula: "1020756712", telefono: "3138681078", direccion: "Sol Naciente", barrio: "Sol Naciente, Mosquera Cundinamarca", proceso: "" },
+  { nombre: "Cristian Daza Castro", cedula: "1073156282", telefono: "3002202653", direccion: "", barrio: "Amarilo", proceso: "" },
+  { nombre: "Jenifer Patricia Roldán Castaño", cedula: "35354042", telefono: "3103041654", direccion: "Villas de Alcalá - Madrid", barrio: "Villas de Alcalá - Madrid", proceso: "" },
+  { nombre: "Cristian Camilo Barreiro Quintero", cedula: "1032445155", telefono: "3015375441", direccion: "Calle 8 #3-108 torre 16 apto 404, Padua", barrio: "Reserva de Madrid", proceso: "Derechos humanos / Animalista" },
+  { nombre: "Walter Camilo Plazas", cedula: "1073171078", telefono: "3125356746", direccion: "Balcones de Madrid, Escallón", barrio: "Balcones de Madrid", proceso: "Deporte y gimnasio" },
+  { nombre: "Raquel Juliette Bustos Vásquez", cedula: "1013613935", telefono: "3227599716", direccion: "Calle 4 #1a-126 torre 8 apto 604, Conjunto La Sierra", barrio: "Casablanca", proceso: "Salud" },
+  { nombre: "Edwin Yair Orjuela Quevedo", cedula: "11367232", telefono: "3134217597", direccion: "Calle 4 #1a-126 torre 8 apto 604, Conjunto La Sierra", barrio: "Casablanca", proceso: "Salud" },
+  { nombre: "Yadira Rodríguez", cedula: "46671779", telefono: "3114954360", direccion: "Calle 5 #1A-41", barrio: "San Francisco", proceso: "Jóvenes, mujeres y hombres" },
+  { nombre: "Adriana Acosta Hernández", cedula: "1032356962", telefono: "3114782695", direccion: "Calle 19 #3a-303 este", barrio: "Reservas de Madrid", proceso: "Sectorial Reservas de Madrid" },
+  { nombre: "Brayan Jerath Carrero Cuellar", cedula: "1073169418", telefono: "3005100894", direccion: "Cll 9b # 6-73", barrio: "Cedritos", proceso: "Jóvenes" },
+  { nombre: "Saúl Martínez Velásquez", cedula: "80352941", telefono: "3245863041", direccion: "Calle 4 #14-84", barrio: "Serrezuela", proceso: "Deporte" },
+  { nombre: "Bryan Stee Rojas Gómez", cedula: "1073179207", telefono: "3223708300", direccion: "Calle 5sur #1a-14 este", barrio: "Cerezos 2", proceso: "" }
+];
 
 // Approximate coordinates for barrios in Mosquera, Cundinamarca
 const BARRIO_COORDS = {
@@ -524,6 +670,19 @@ const BARRIO_COORDS = {
 };
 
 const COLORS = ['#238636','#1f6feb','#9333ea','#d29922','#da3633','#0891b2','#16a34a','#7c3aed','#b45309','#c026d3'];
+
+// ── NAV TABS ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+    if (tab.dataset.view === 'view-personas' && map) {
+      setTimeout(() => map.invalidateSize(), 50);
+    }
+  });
+});
 
 // ── MAP ──────────────────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: true, scrollWheelZoom: true })
@@ -664,6 +823,41 @@ searchInput.addEventListener('input', () => {
     (r['BARRIO']||'').toLowerCase().includes(q)
   );
   renderTable(filtered);
+});
+
+// ── LÍDERES: KPIs, GRID, BÚSQUEDA ────────────────────────────────────────
+const leaderGrid = document.getElementById('leader-grid');
+const leaderCountBadge = document.getElementById('leader-count-badge');
+const leaderSearch = document.getElementById('leader-search');
+
+document.getElementById('leader-total').textContent = LEADERS.length;
+document.getElementById('leader-barrios').textContent = new Set(LEADERS.map(l => l.barrio).filter(Boolean)).size;
+document.getElementById('leader-procesos').textContent = new Set(LEADERS.map(l => l.proceso).filter(Boolean)).size;
+
+function renderLeaders(data) {
+  leaderGrid.innerHTML = data.map(l => `
+    <div class="leader-card">
+      <div class="leader-name">${l.nombre}</div>
+      ${l.cedula ? `<div class="leader-row"><span class="li-ico">🪪</span><span>Cédula: <span class="li-val">${l.cedula}</span></span></div>` : ''}
+      ${l.telefono ? `<div class="leader-row"><span class="li-ico">📞</span><span class="li-val">${l.telefono}</span></div>` : ''}
+      ${l.direccion ? `<div class="leader-row"><span class="li-ico">📍</span><span class="li-val">${l.direccion}</span></div>` : ''}
+      ${l.barrio ? `<div class="leader-row"><span class="li-ico">🏘️</span><span class="li-val">${l.barrio}</span></div>` : ''}
+      ${l.proceso ? `<div class="leader-process">${l.proceso}</div>` : ''}
+    </div>
+  `).join('');
+  leaderCountBadge.textContent = `${data.length} líderes`;
+}
+
+renderLeaders(LEADERS);
+
+leaderSearch.addEventListener('input', () => {
+  const q = leaderSearch.value.toLowerCase();
+  const filtered = LEADERS.filter(l =>
+    l.nombre.toLowerCase().includes(q) ||
+    (l.barrio||'').toLowerCase().includes(q) ||
+    (l.proceso||'').toLowerCase().includes(q)
+  );
+  renderLeaders(filtered);
 });
 </script>
 </body>
