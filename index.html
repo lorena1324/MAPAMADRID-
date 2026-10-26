@@ -515,7 +515,6 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">🗺️ Mapa de Cobertura — Madrid y Mosquera</div>
-          <span class="badge" id="map-badge">Leaflet Maps</span>
         </div>
         <div id="map"></div>
       </div>
@@ -780,15 +779,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const maxVal = Math.max(...Object.values(BARRIOS_TODOS));
-const porMunicipio = {}, sinUbicar = [];
 const boundsMadrid = [];
 
 // Un marcador por barrio con personas registradas y coordenadas conocidas
 Object.entries(BARRIOS_TODOS).forEach(([barrio, count]) => {
   const c = BARRIO_COORDS[barrio];
-  if (!c) { sinUbicar.push(barrio); return; }
+  if (!c) return;
   const [lat, lon, municipio] = c;
-  porMunicipio[municipio] = (porMunicipio[municipio] || 0) + count;
   if (municipio === 'Madrid') boundsMadrid.push([lat, lon]);
   const r = 6 + Math.sqrt(count / maxVal) * 24;
   const opacity = 0.45 + (count / maxVal) * 0.45;
@@ -813,8 +810,6 @@ Object.entries(BARRIOS_TODOS).forEach(([barrio, count]) => {
 // Encuadre en el casco urbano de Madrid (las veredas lejanas quedan fuera del zoom inicial)
 const urbano = boundsMadrid.filter(([la, lo]) => Math.abs(la - 4.7325) < 0.015 && Math.abs(lo + 74.263) < 0.025);
 if (urbano.length) map.fitBounds(urbano, { padding: [20, 20] });
-document.getElementById('map-badge').textContent =
-  `Madrid: ${porMunicipio['Madrid'] || 0} · Mosquera: ${porMunicipio['Mosquera'] || 0} · sin ubicar: ${sinUbicar.reduce((s,b) => s + BARRIOS_TODOS[b], 0)}`;
 
 // ── BAR CHART ─────────────────────────────────────────────────────────────
 const barChart = document.getElementById('bar-chart');
